@@ -1,4 +1,4 @@
-from typing import List, Set, Callable, Tuple
+from typing import List, Set, Callable, Tuple, Dict
 import functools
 
 
@@ -7,14 +7,14 @@ class Cell:
     value: int
     shadowValue: int
     location: Tuple[int]
-    constraints : List[Callable]
+    constraints : Dict
     potential_values : Set[int]
     sudoku_size: int
     def __init__(self, sudoku_size: int, location: Tuple[int], value : int=None) -> None:
         self.value : int = value
         self.shadowValue : int = value
         self.potential_values = set(range(1, sudoku_size+1)) # Add all values to potential values
-        self.constraints = []
+        self.constraints = {}
         self.location = location
         self.sudoku_size = sudoku_size
         pass
@@ -37,18 +37,29 @@ class Cell:
         if self.value != value:
             self.value = int(value)
             self.shadowValue = int(value)
+    def __add_constraint(self, other_cell, test, reflective_test):
+        if other_cell not in self.constraints.keys():
+            self.constraints[other_cell] = []
+        self.constraints[other_cell].append(test)
+        if self not in other_cell.constraints.keys():
+            other_cell.constraints[self] = []
+        other_cell.constraints[self].append(reflective_test)
+
     def add_neq_constraint(self, other_cell):
-        self.constraints.append(lambda test_value : other_cell != test_value)
+        self.__add_constraint(other_cell, lambda test_value : other_cell != test_value, lambda test_value : self != test_value)
         pass
+    def get_constraints(self):
+        return self.constraints
     def evaluateConstraints(self):
         if self.value != None: # If the cell is already solved, don't evaluate anything
             return
-        for c in self.constraints:
-            for p in self.potential_values.copy():
-                if c(p) != True: # If the constraint is not respected with the test value, discard it from potential values
-                    self.potential_values.discard(p)
-                    print("Disacred potential value {} from cell {}".format(p, self.location))
-        
+        for c_c in self.constraints.values(): #  Returns a list of constraints per Other_cell
+            for c in c_c: # Ierate through constraints in Other_ce;;
+                for p in self.potential_values.copy():
+                    if c(p) != True: # If the constraint is not respected with the test value, discard it from potential values
+                        self.potential_values.discard(p)
+                        print("Disacred potential value {} from cell {}".format(p, self.location))
+            
         if len(self.potential_values) == 1:
             self.value = self.potential_values[0]
         if len(self.potential_values) == 0:
@@ -161,9 +172,15 @@ class TransposableDict:
         return repr(self._dict)
 
 class Constraints:
-    constraints_by_cell_pair: TransposableDict[(Cell, Cell)]
+    constraints_by_cell_pair: TransposableDict
     def __init__(self) -> None:
         self.constraints_by_cell_pair = TransposableDict()
+        #Here, I need to replace the cell equal statement with the real equal statement. This will allow me to look up if the dict key corresponds to a cell and find its constraints.
+    def add_constraint(self, constrainedCell, constrainingCell, test):
+        if (constrainedCell, constrainingCell) not in self.constraints_by_cell_pair.keys():
+            self.constraints_by_cell_pair[(constrainedCell, constrainingCell)] = []
+        self.constraints_by_cell_pair[(constrainedCell, constrainingCell)].append(test)
+
         
 
 class Grid:
@@ -191,11 +208,16 @@ class Grid:
                 cells = tuple([tuple([self.grid[x][y] for x in range(i*box_size, i*box_size+box_size)] )for y in range(j*box_size, j*box_size+box_size)])
 
                 self.boxes.append(Box(cells)) 
+        # Once each cell group has applied its constraints, they can be stored in the grid-level constraints repository
+
         
         
         pass
-    def applyBasicConstraints(self):
-        # Box constraints
+    
+    def __registerConstraints(self):
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid)):
+                pass
         pass
     def evaluateAllCellsOnce(self):
         for i in range(len(self.grid)):
