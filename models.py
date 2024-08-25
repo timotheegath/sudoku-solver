@@ -109,6 +109,9 @@ class _UniqueRange(_CellGroup):
                     other_cells_to_clear = [cell for cell in group.cells if cell not in cells]
                     for c in other_cells_to_clear:
                         c.del_potential_value(p_value)
+    def find_xlets(self):
+        # Find within a unique range whether two cells must hold the two same values only, in which case they must be removed
+        # as potential values from everywhere else
                 
 
         return
