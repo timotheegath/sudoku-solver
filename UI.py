@@ -1,7 +1,10 @@
 import tkinter as tk
 from models import Grid
+import string
 SUDOKU_SIZE = 9
 class SudokuUI:
+    alphabet = tuple(list(string.ascii_uppercase))
+
     def __init__(self, root, grid):
         self.root = root
         self.grid : Grid = grid
@@ -12,21 +15,27 @@ class SudokuUI:
 
     def create_grid(self):
         for i in range(9):
+            label = tk.Label(self.root, text=f'{self.alphabet[i]}', font=('Arial', 18))
+            label.grid(row=i+1, column=0, padx=5, pady=5)
+        for j in range(9):
+            label = tk.Label(self.root, text=f'{j+1}', font=('Arial', 18))
+            label.grid(row=0, column=j+1, padx=5, pady=5)
+        for i in range(9):
             for j in range(9):
                 entry = tk.Entry(self.root, width=3, font=('Arial', 18), justify='center')
-                entry.grid(row=i, column=j, padx=5, pady=5)
-                if self.grid[i][j] != None:
+                entry.grid(row=i+1, column=j+1, padx=5, pady=5)
+                if not self.grid[i][j].isEmpty():
                     entry.insert(0, self.grid[i][j])
                     entry.config(state='disabled')
                 self.entries[i][j] = entry
 
     def create_update_button(self):
         update_button = tk.Button(self.root, text="Update Grid", command=self.update_grid)
-        update_button.grid(row=9, column=4, pady=10)
+        update_button.grid(row=10, column=4, pady=10)
     
     def create_solve_button(self):
         solve_button = tk.Button(self.root, text="Solve Grid", command=self.solve)
-        solve_button.grid(row=9, column=3, pady=10)
+        solve_button.grid(row=10, column=3, pady=10)
         self.refresh_grid()
     def solve(self):
         self.grid.evaluateAllCellsOnce()
@@ -57,7 +66,7 @@ class SudokuUI:
                 entry = self.entries[i][j]
                 entry.config(state='normal')
                 entry.delete(0, tk.END)
-                if self.grid[i][j] != None:
+                if not self.grid[i][j].isEmpty():
                     entry.insert(0, self.grid[i][j])
                     entry.config(state='disabled')
 
